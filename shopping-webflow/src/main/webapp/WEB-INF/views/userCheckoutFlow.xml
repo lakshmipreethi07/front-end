@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.springframework.org/schema/webflow 
+      http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd">
+<var name="billingAddress" class="com.niit.shopping.model.BillingAddress"/>
+    <var name="order" class="com.niit.shopping.model.Userorder" />
+    <var name="shippingAddress" class="com.niit.shopping.model.ShippingAddress"/>
+    <var name="carddetail" class="com.niit.shopping.model.CardDetail" />
+
+    <action-state id="orderProcess">
+        <evaluate expression="cartDAOImpl.validate(requestParameters.cartId)" result="order.cart" />
+        <transition to="invalidProcess" on-exception="java.io.IOException" />
+        <transition to="billingaddress" />
+    </action-state>
+
+	
+    <view-state id="billingaddress" view="billingAddress.jsp" model="billingAddress">
+        <transition on="billingAddProcessCompleted" to="viewBilling" />
+    </view-state>
+<action-state id="viewBilling">
+		<evaluate
+			expression="flowController.addBillingAddress(billingAddress)"></evaluate>
+		<transition on="success" to="shippingAddDisplay" />
+	</action-state>
+    <view-state id="shippingAddDisplay" view="shippingAddDisplay.jsp" model="shippingAddress">
+        <transition on="shippingAddProcessCompleted" to="viewShipping" />
+        <transition on="backTouserInfoProcess" to="billingaddress" />
+    </view-state>
+<action-state id="viewShipping">
+		<evaluate
+			expression="flowController.addShippingAddress(shippingAddress)"></evaluate>
+		<transition on="success" to="validateOrder" />
+	</action-state>
+	
+    <view-state id="validateOrder" view="validateOrder.jsp">
+        <transition on="validateOrderProcessCompleted" to="cardDetail" />
+        <transition on="backToShippingAddProcess" to="shippingAddDisplay" />
+    </view-state>
+    
+    <view-state id="cardDetail">
+        <transition to="endState" />
+    </view-state>
+
+    <end-state id="endState" />
+
+    <view-state id="invalidProcess">
+        <transition to="endState" />
+    </view-state>
+
+    <end-state id="cancelOrderProcess" view="orderProcessCancelled.jsp" />
+
+    <global-transitions>
+        <transition on="cancel" to="cancelOrderProcess" />
+    </global-transitions>
+</flow>
